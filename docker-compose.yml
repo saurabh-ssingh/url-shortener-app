@@ -17,12 +17,17 @@ services:
   redis:
     image: redis:8.2
     container_name: urlshortener-redis
+    restart: always
     ports:
       - "6379:6379"
     command: redis-server --save 60 1 --loglevel warning
     volumes:
       - redis_data:/data
-
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
 
   app:
     build: .
@@ -32,11 +37,22 @@ services:
       - "8080:8080"
     environment:
       - SPRING_PROFILES_ACTIVE=prod
-      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/urlshortener
+
+      # Database
+      - SPRING_DATASOURCE_HOST=db
+      - SPRING_DATASOURCE_PORT=5432
+      - SPRING_DATASOURCE_DB=urlshortener
       - SPRING_DATASOURCE_USERNAME=postgres
       - SPRING_DATASOURCE_PASSWORD=postgres
+
+      # Redis
+      - SPRING_REDIS_HOST=redis
+      - SPRING_REDIS_PORT=6379
     depends_on:
-      - db
+      db:
+        condition: service_started
+      redis:
+        condition: service_healthy
 
 volumes:
   db_data:
