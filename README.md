@@ -246,4 +246,5 @@ ssh -i tinyurl.pem ubuntu@<EC2-Public-IP>
 * Use `.env` for local dev and Docker environment variable substitution.
 * Always verify Redis and Postgres connectivity from the app container before running.
 
+***********
 
