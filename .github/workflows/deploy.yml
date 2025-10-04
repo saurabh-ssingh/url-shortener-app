@@ -11,29 +11,26 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout the repository
-      - name: Checkout code
+      # 1. Checkout repository
+      - name: Checkout Code
         uses: actions/checkout@v3
 
-      # 2. Write SSH key to a file
-      - name: Setup SSH key
+      # 2. Start SSH Agent and add deploy key
+      - name: Setup SSH
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
-
-      # 3. Start SSH agent and add the key
-      - name: Start SSH agent
-        run: |
           eval "$(ssh-agent -s)"
           ssh-add ~/.ssh/deploy_key
+          ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
-      # 4. Sync files to EC2
+      # 3. Sync files to EC2
       - name: Sync files to EC2
         run: |
           rsync -avz --exclude='.git*' ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/tinyurler
 
-      # 5. Run Docker Compose on EC2
+      # 4. Connect and run Docker Compose on EC2
       - name: Deploy via Docker Compose
         run: |
           ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "cd ~/tinyurler && docker-compose pull && docker-compose up -d --build"
