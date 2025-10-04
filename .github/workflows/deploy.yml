@@ -1,5 +1,6 @@
 name: CI/CD to AWS EC2
 
+# Trigger workflow on push to main branch
 on:
   push:
     branches:
@@ -11,22 +12,23 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout repository
+      # 1. Checkout the repository
       - name: Checkout Code
         uses: actions/checkout@v3
 
-      # 2. Setup SSH
-      - name: Setup SSH
+      # 2. Start SSH agent and add private key
+      - name: Start SSH Agent
         uses: webfactory/ssh-agent@v0.9.1
         with:
           ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
 
-      # 3. Copy code to EC2
+      # 3. Sync files to EC2
       - name: Sync files to EC2
         run: |
           rsync -avz --exclude='.git*' ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/tinyurler
 
-      # 4. Connect and run Docker Compose on EC2
+      # 4. Connect via SSH and deploy Docker Compose
       - name: Deploy via Docker Compose
         run: |
-          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "cd ~/tinyurler && docker-compose pull && docker-compose up -d --build"
+          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
+          "cd ~/tinyurler && docker-compose pull && docker-compose up -d --build"
