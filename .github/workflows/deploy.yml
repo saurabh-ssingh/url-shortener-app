@@ -18,6 +18,7 @@ jobs:
       # 2. Write SSH key to a file
       - name: Setup SSH key
         run: |
+          mkdir -p ~/.ssh
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
           chmod 600 ~/.ssh/deploy_key
 
