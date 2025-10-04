@@ -247,5 +247,5 @@ ssh -i tinyurl.pem ubuntu@<EC2-Public-IP>
 * Always verify Redis and Postgres connectivity from the app container before running.
 
 
-
+**************
 
