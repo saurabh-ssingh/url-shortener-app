@@ -1,6 +1,5 @@
 name: CI/CD to AWS EC2
 
-# Trigger workflow on push to main branch
 on:
   push:
     branches:
@@ -13,22 +12,27 @@ jobs:
 
     steps:
       # 1. Checkout the repository
-      - name: Checkout Code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      # 2. Start SSH agent and add private key
-      - name: Start SSH Agent
-        uses: webfactory/ssh-agent@v0.9.1
-        with:
-          ssh-private-key: ${{ secrets.EC2_SSH_KEY }}
+      # 2. Write SSH key to a file
+      - name: Setup SSH key
+        run: |
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
 
-      # 3. Sync files to EC2
+      # 3. Start SSH agent and add the key
+      - name: Start SSH agent
+        run: |
+          eval "$(ssh-agent -s)"
+          ssh-add ~/.ssh/deploy_key
+
+      # 4. Sync files to EC2
       - name: Sync files to EC2
         run: |
           rsync -avz --exclude='.git*' ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/home/${{ secrets.EC2_USER }}/tinyurler
 
-      # 4. Connect via SSH and deploy Docker Compose
+      # 5. Run Docker Compose on EC2
       - name: Deploy via Docker Compose
         run: |
-          ssh -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} \
-          "cd ~/tinyurler && docker-compose pull && docker-compose up -d --build"
+          ssh ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "cd ~/tinyurler && docker-compose pull && docker-compose up -d --build"
