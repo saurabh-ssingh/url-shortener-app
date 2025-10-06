@@ -25,15 +25,20 @@ jobs:
           ssh-add ~/.ssh/deploy_key
           ssh-keyscan -H ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
 
+      # 3. Create tinyurler folder on EC2
+      - name: Create tinyurler folder on EC2
+        run: |
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "mkdir -p ${{ secrets.EC2_PATH }}"
+
       # 3. Test SSH Connection
       - name: Test SSH connection
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/deploy_key ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} "echo '✅ GitHub Actions successfully connected to EC2'"
 
-      # 4. Sync files to EC2
+        # 4. Sync files to EC2 (inside tinyurler)
       - name: Sync files to EC2
         run: |
-          rsync -avz -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" --exclude='.git*' ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ secrets.EC2_PATH }}
+          rsync -avz -e "ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no" --exclude='.git*' ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:${{ secrets.EC2_PATH }}/
 
       # 5. Deploy via Docker Compose
       - name: Deploy via Docker Compose
