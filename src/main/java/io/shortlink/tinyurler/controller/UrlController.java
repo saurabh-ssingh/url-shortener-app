@@ -58,4 +58,10 @@ public class UrlController {
     log.info("Redirecting short code: {} to original URL: {}", shortCode, originalUrl);
     return new RedirectView(originalUrl);
   }
+
+
+  @GetMapping("/test")
+    public String testCode(){
+      return "test Code";
+  }
 }
